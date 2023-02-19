@@ -1,0 +1,42 @@
+{
+	"name": "zope",
+	"version": "0.0.1",
+	"type": "module",
+	"scripts": {
+		"build": "vite build",
+		"format": "prettier --write . --plugin-search-dir .",
+		"lint": "eslint .",
+		"test": "vitest run",
+		"coverage": "vitest run --coverage",
+		"dev": "vitest dev"
+	},
+	"dependencies": {
+		"superenum": "^0.0.1",
+		"type-fest": "^3.5.7",
+		"typescript": "^4.9.5"
+	},
+	"devDependencies": {
+		"@types/node": "^18.13.0",
+		"@typescript-eslint/eslint-plugin": "^5.52.0",
+		"@typescript-eslint/parser": "^5.52.0",
+		"eslint": "^8.34.0",
+		"prettier": "^2.8.4",
+		"unplugin-auto-import": "^0.14.3",
+		"vite": "^4.1.1",
+		"vite-plugin-dts": "2.0.0-beta.0",
+		"vitest": "^0.28.5"
+	},
+	"files": [
+		"./dist/**/*",
+		"tsconfig.json"
+	],
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"require": "./dist/index.cjs",
+			"types": "./dist/index.d.ts"
+		}
+	},
+	"main": "./dist/index.cjs",
+	"types": "./dist/index.d.ts"
+}
