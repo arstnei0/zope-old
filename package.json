@@ -19,6 +19,7 @@
 		"@types/node": "^18.13.0",
 		"@typescript-eslint/eslint-plugin": "^5.52.0",
 		"@typescript-eslint/parser": "^5.52.0",
+		"@vitest/ui": "^0.28.5",
 		"eslint": "^8.34.0",
 		"prettier": "^2.8.4",
 		"unplugin-auto-import": "^0.14.3",

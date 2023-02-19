@@ -2,13 +2,15 @@ import { Bracket, Token, tokenize } from "./token"
 
 describe("tokenize", () => {
 	it("brackets", () => {
-		expect(tokenize("(){}[]")).toEqual([
+		expect(tokenize("(){}[]<>")).toEqual([
 			Token.bracket(Bracket.open("paren")),
 			Token.bracket(Bracket.close("paren")),
 			Token.bracket(Bracket.open("curly")),
 			Token.bracket(Bracket.close("curly")),
 			Token.bracket(Bracket.open("square")),
 			Token.bracket(Bracket.close("square")),
+			Token.bracket(Bracket.open("angle")),
+			Token.bracket(Bracket.close("angle")),
 		])
 	})
 
@@ -45,5 +47,17 @@ describe("tokenize", () => {
 			Token.visitor(),
 			Token.identifier("world"),
 		])
+	})
+
+	it("separators", () => {
+		expect(tokenize("'`\"")).toEqual([
+			Token.separator(`'`),
+			Token.separator(`\``),
+			Token.separator(`"`),
+		])
+	})
+
+	it("operators", () => {
+		expect(tokenize("=")).toEqual([Token.operator("=")])
 	})
 })
