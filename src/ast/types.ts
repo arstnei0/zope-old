@@ -13,9 +13,8 @@ export type Node =
 	| { type: "assign"; from: Node; to: Node }
 	| { type: "read"; identifier: string }
 	| { type: "call"; fn: Node; in: Node }
-	| { type: "lambda"; body: Node; in: Node }
 	| { type: "block"; body: Node[] }
-	| { type: "let"; ident: Node; body: Node }
+	| { type: "let"; identifier: string; body: Node }
 	| { type: "if"; condition: Node; then: Node }
 
 export type Parsed = [result: Node, rest: TokenStream | void] | void

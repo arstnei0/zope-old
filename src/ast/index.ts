@@ -127,6 +127,34 @@ export const parseLiteral = ((tokenStream$) => {
 	})
 }) satisfies Parser
 
+export const parseLet = ((tokenStream$: TokenStream) => {
+	const tokenStream = skipSpaces(tokenStream$)
+	const first = tokenStream.shift()
+	if (!first) return
+	return Token.match(first, {
+		keyword() {
+			if (this === "let") {
+				const second = tokenStream.shift()
+				if (!second) return
+				return Token.match(second, {
+					space() {
+						if (!(this === " ")) return
+						const third = parseOne(tokenStream)
+						if (!third) return
+						return [{ type: "let", identifier }, third[1]] as Parsed
+					},
+					_() {
+						return
+					},
+				})
+			}
+		},
+		_() {
+			return
+		},
+	})
+}) satisfies Parser
+
 export const parseOne = ((tokenStream: TokenStream) => {
 	const blockNode = parseBlock(tokenStream)
 	if (blockNode) return blockNode
