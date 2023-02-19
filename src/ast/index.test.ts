@@ -1,5 +1,5 @@
-import { parseBlock, parseIf, parseLiteral } from "."
-import { Brackets, Token } from "../token"
+import { parseBlock, parseCall, parseIf, parseLiteral } from "."
+import { Brackets, NumberChar, Token } from "../token"
 import { Literal, Node } from "./types"
 
 describe("ast", () => {
@@ -51,20 +51,42 @@ describe("ast", () => {
 		])
 	})
 
-	it("parseLiteral", () => {
-		expect(parseLiteral([Token.identifier("100")])).toEqual([
-			{ type: "literal", data: Literal.number(100) } as Node,
+	it("parseCall", () => {
+		expect(
+			parseCall([
+				Token.identifier("add"),
+				Token.bracket(Brackets["("]),
+				Token.number(["1"]),
+				Token.bracket(Brackets[")"]),
+			]),
+		).toEqual([
+			{
+				type: "call",
+				fn: { type: "read", identifier: "add" },
+				in: { type: "literal", data: Literal.number(1) },
+			} as Node,
 			[],
 		])
+	})
+
+	it("parseLiteral", () => {
+		expect(
+			parseLiteral([Token.number([..."100"] as NumberChar[])]),
+		).toEqual([{ type: "literal", data: Literal.number(100) } as Node, []])
 
 		expect(
 			parseLiteral([
 				Token.separator('"'),
-				Token.identifier("Hello"),
+				Token.separated("Hello"),
 				Token.separator('"'),
 			]),
 		).toEqual([
 			{ type: "literal", data: Literal.string("Hello") } as Node,
+			[],
+		])
+
+		expect(parseLiteral([Token.keyword("true")])).toEqual([
+			{ type: "literal", data: Literal.boolean(true) } as Node,
 			[],
 		])
 	})

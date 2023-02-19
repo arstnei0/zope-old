@@ -38,6 +38,27 @@ export const delimited = (
 ): [TokenStream, TokenStream] | void => {
 	const tokenStream = skipSpaces(tokenStream$)
 	if (looseEqual(tokenStream.shift(), start)) {
+		let count = 0
+		const result = [] as TokenStream
+		const rest = [] as TokenStream
+		for (const token of tokenStream) {
+			if (count === -1) {
+				rest.push(token)
+			} else {
+				if (looseEqual(token, start)) {
+					count += 1
+				} else if (looseEqual(token, end)) {
+					if (count === 0) {
+						count = -1
+						continue
+					} else {
+						count -= 1
+					}
+				}
+				result.push(token)
+			}
+		}
+		return [result, rest]
 		const reversedTokenStream = Array.from(tokenStream)
 		reversedTokenStream.reverse()
 		let nonreversedI = tokenStream.length

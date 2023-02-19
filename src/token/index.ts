@@ -30,6 +30,8 @@ export const Keywords = [
 	"return",
 	"if",
 	"else",
+	"true",
+	"false",
 ] as const
 export type Keyword = (typeof Keywords)[number]
 
@@ -42,12 +44,29 @@ export type Operator = (typeof Operators)[number]
 export const Seperators = ['"', "'", "`"] as const
 export type Seperator = (typeof Seperators)[number]
 
+export const NumberChars = [
+	"1",
+	"2",
+	"3",
+	"4",
+	"5",
+	"6",
+	"7",
+	"8",
+	"9",
+	"0",
+	".",
+] as const
+export type NumberChar = (typeof NumberChars)[number]
+
 export const Token = Enum<{
 	bracket: Bracket
 	punctuation: Punctuation
 	visitor: void
 	keyword: Keyword
+	separated: string
 	identifier: string
+	number: NumberChar[]
 	space: Space
 	operator: Operator
 	separator: Seperator
@@ -57,19 +76,40 @@ export type TokenStream = Token[]
 
 export const tokenize = (code: string): TokenStream => {
 	const stream: TokenStream = []
-	const codeArr = Array.from(`${code} `)
+	const codeArr = Array.from(`${code}\n`)
+
 	let currIdentifier: string | null = null
+
+	let separated: Token | null = Token.separated("") || null
+	let openedSeparator: Seperator | null = null
+
+	let currNumber: NumberChar[] | null = null
 
 	for (const i in codeArr) {
 		const char = codeArr[i]
+		const isSeparator = Seperators.includes(char as Seperator)
+
+		if (openedSeparator) {
+			if (openedSeparator === char) {
+				stream.push(separated)
+				separated = Token.separated("")
+				stream.push(Token.separator(char as Seperator))
+				openedSeparator = null
+			} else {
+				separated = Token.separated(`${Token.data(separated)}${char}`)
+			}
+			continue
+		}
+
 		const isSpace = Spaces.includes(char as Space)
 		const isOperator = Operators.includes(char as Operator)
 		const isPuncuation = Punctuations.includes(char as Punctuation)
-		const isSeparator = Seperators.includes(char as Seperator)
 		const isBracket = Reflect.has(Brackets, char)
+		const isNumber = Reflect.has(NumberChars, char)
 		const isVisitor = char === "."
 		const isIdent = !(
 			isOperator ||
+			isNumber ||
 			isSeparator ||
 			isSpace ||
 			isPuncuation ||
@@ -77,6 +117,15 @@ export const tokenize = (code: string): TokenStream => {
 			isVisitor
 		)
 
+		if (currNumber !== null) {
+			if (isNumber) {
+				currNumber.push(char as NumberChar)
+				continue
+			} else {
+				stream.push(Token.number(currNumber))
+				currNumber = null
+			}
+		}
 		if (!isIdent && currIdentifier !== null) {
 			if (Keywords.includes(currIdentifier as Keyword)) {
 				stream.push(Token.keyword(currIdentifier as Keyword))
@@ -89,6 +138,10 @@ export const tokenize = (code: string): TokenStream => {
 			stream.push(Token.space(char as Space))
 		} else if (isSeparator) {
 			stream.push(Token.separator(char as Seperator))
+			separated = Token.separated("")
+			openedSeparator = char as Seperator
+		} else if (isNumber) {
+			currNumber = [char as NumberChar]
 		} else if (isOperator) {
 			stream.push(Token.operator(char as Operator))
 		} else if (isPuncuation) {

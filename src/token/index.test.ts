@@ -1,4 +1,4 @@
-import { Bracket, Token, tokenize } from "./token"
+import { Bracket, Token, tokenize } from "."
 
 describe("tokenize", () => {
 	it("brackets", () => {
@@ -50,10 +50,28 @@ describe("tokenize", () => {
 	})
 
 	it("separators", () => {
-		expect(tokenize("'`\"")).toEqual([
+		expect(tokenize("''``\"\"")).toEqual([
+			Token.separator(`'`),
+			Token.separated(""),
 			Token.separator(`'`),
 			Token.separator(`\``),
+			Token.separated(""),
+			Token.separator(`\``),
 			Token.separator(`"`),
+			Token.separated(""),
+			Token.separator(`"`),
+		])
+	})
+
+	it("number", () => {
+		expect(tokenize("100")).toEqual([Token.number(["1", "0", "0"])])
+	})
+
+	it("separated", () => {
+		expect(tokenize("'Hello world!!!'")).toEqual([
+			Token.separator(`'`),
+			Token.separated("Hello world!!!"),
+			Token.separator(`'`),
 		])
 	})
 

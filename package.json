@@ -11,7 +11,7 @@
 		"dev": "vitest dev"
 	},
 	"dependencies": {
-		"superenum": "^0.0.1",
+		"superenum": "^0.0.2",
 		"type-fest": "^3.5.7",
 		"typescript": "^4.9.5"
 	},

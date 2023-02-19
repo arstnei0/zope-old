@@ -7,7 +7,7 @@ specifiers:
   '@vitest/ui': ^0.28.5
   eslint: ^8.34.0
   prettier: ^2.8.4
-  superenum: ^0.0.1
+  superenum: ^0.0.2
   type-fest: ^3.5.7
   typescript: ^4.9.5
   unplugin-auto-import: ^0.14.3
@@ -16,7 +16,7 @@ specifiers:
   vitest: ^0.28.5
 
 dependencies:
-  superenum: 0.0.1
+  superenum: 0.0.2
   type-fest: 3.6.0
   typescript: 4.9.5
 
@@ -3511,8 +3511,8 @@ packages:
       acorn: 8.8.2
     dev: true
 
-  /superenum/0.0.1:
-    resolution: {integrity: sha512-E41NYSvNB13d0OzYr6CTSo/OwjViwKnQqwcL9XRqNAy4NhTwz13xsoyXZ4Rhz/i8Klk0wpYW8XuqFgjQjOIrsA==}
+  /superenum/0.0.2:
+    resolution: {integrity: sha512-QRkiKdrFjtlHMb5/R1+5Ob8PqzMkgzy9dNpCcrjm20JrQEfxGUmqSU1jGV+f7j/ctQEHC8CcYSK4/2ccbrN6Tw==}
     dependencies:
       '@changesets/cli': 2.26.0
       terser: 5.16.4
