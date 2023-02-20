@@ -1,6 +1,6 @@
 import { Brackets, Token, TokenStream } from "../token"
 import {
-	delimited as deliminated,
+	deliminated as deliminated,
 	skipSpaces,
 	startsWithToken,
 } from "./helpers"

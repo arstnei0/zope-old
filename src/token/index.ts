@@ -74,6 +74,19 @@ export const Token = Enum<{
 export type Token = typeof Token.item
 export type TokenStream = Token[]
 
+export const BracketTokens = {
+	"(": Token.bracket(Brackets["("]),
+	")": Token.bracket(Brackets[")"]),
+	"[": Token.bracket(Brackets["["]),
+	"]": Token.bracket(Brackets["]"]),
+	"{": Token.bracket(Brackets["{"]),
+	"}": Token.bracket(Brackets["}"]),
+	"<": Token.bracket(Brackets["<"]),
+	">": Token.bracket(Brackets[">"]),
+} as const
+
+export const AnySpaceChecker = (token: Token) => Token.type(token) === "space"
+
 export const tokenize = (code: string): TokenStream => {
 	const stream: TokenStream = []
 	const codeArr = Array.from(`${code}\n`)

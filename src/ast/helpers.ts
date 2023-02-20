@@ -3,21 +3,18 @@ import { looseEqual } from "../utils/equal"
 
 export const skipSpaces = (
 	tokenStream: TokenStream,
-	{ start = true, end = true } = {},
+	{
+		start = true,
+		end = true,
+		checker = (token: Token) => Token.type(token) !== "space",
+	} = {},
 ) => {
-	const result = [] as TokenStream
-	let notSpace = false
-	for (const token of tokenStream) {
-		if (!(Token.type(token) === "space")) {
-			notSpace = true
-			result.push(token)
-		} else if (notSpace) {
-			if (!end) result.push(token)
-		} else {
-			if (!start) result.push(token)
-		}
-	}
-	return result
+	const left = tokenStream.findIndex(checker)
+	const right = tokenStream.findLastIndex(checker)
+	return tokenStream.slice(
+		start ? left : 0,
+		end ? right + 1 : tokenStream.length,
+	)
 }
 
 export const startsWithToken = (
@@ -31,11 +28,11 @@ export const startsWithToken = (
 	}
 }
 
-export const delimited = (
+export const deliminated = (
 	tokenStream$: TokenStream,
 	start: Token,
 	end: Token,
-): [TokenStream, TokenStream] | void => {
+): [result: TokenStream, rest: TokenStream] | void => {
 	const tokenStream = skipSpaces(tokenStream$)
 	if (looseEqual(tokenStream.shift(), start)) {
 		let count = 0
@@ -59,19 +56,26 @@ export const delimited = (
 			}
 		}
 		return [result, rest]
-		const reversedTokenStream = Array.from(tokenStream)
-		reversedTokenStream.reverse()
-		let nonreversedI = tokenStream.length
-		for (const iStr in reversedTokenStream) {
-			const i = parseInt(iStr)
-			const token = reversedTokenStream[i]
-			nonreversedI -= 1
-			if (looseEqual(token, end)) {
-				return [
-					tokenStream.slice(0, nonreversedI),
-					tokenStream.slice(nonreversedI + 1),
-				]
+	}
+}
+
+export const splitStream = (
+	target: TokenStream,
+	checker: (token: Token) => boolean,
+): [left: TokenStream, right: TokenStream] => {
+	let found = false
+	const left = [] as TokenStream
+	const right = [] as TokenStream
+	for (const token of target) {
+		if (found) {
+			right.push(token)
+		} else {
+			if (checker(token)) {
+				found = true
+			} else {
+				left.push(token)
 			}
 		}
 	}
+	return [left, right]
 }
