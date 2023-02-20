@@ -21,7 +21,7 @@ it("punctuations", () => {
 })
 
 it("visitor", () => {
-	expect(tokenize(".")).toEqual([Token.visitor()])
+	expect(tokenize(".")).toEqual([Token.accesser()])
 })
 
 it("keywords", () => {
@@ -43,7 +43,7 @@ it("keywords", () => {
 it("identifiers", () => {
 	expect(tokenize("hello.world")).toEqual([
 		Token.identifier("hello"),
-		Token.visitor(),
+		Token.accesser(),
 		Token.identifier("world"),
 	])
 })

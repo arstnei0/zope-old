@@ -62,7 +62,7 @@ export type NumberChar = (typeof NumberChars)[number]
 export const Token = Enum<{
 	bracket: Bracket
 	punctuation: Punctuation
-	visitor: void
+	accesser: void
 	keyword: Keyword
 	separated: string
 	identifier: string
@@ -162,7 +162,7 @@ export const tokenize = (code: string): TokenStream => {
 		} else if (isBracket) {
 			stream.push(Token.bracket(Brackets[char as keyof typeof Brackets]))
 		} else if (isVisitor) {
-			stream.push(Token.visitor())
+			stream.push(Token.accesser())
 		} else {
 			if (currIdentifier === null) currIdentifier = ""
 			currIdentifier += char

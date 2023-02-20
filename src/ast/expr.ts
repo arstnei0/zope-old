@@ -1,18 +1,20 @@
 import { AnySpaceChecker, BracketTokens, Token, TokenStream } from "../token"
 import { skipSpaces, deliminated, splitStream } from "./helpers"
+import { parseAllStmt as parseAllStmts } from "./stmt"
 import {
 	AccesserExpr,
+	AssignExpr,
+	BlockExpr,
 	CallExpr,
 	Expr,
+	IdentifierExpr,
 	Literal,
 	LiteralExpr,
-	ReturnStmt,
-	Stmt,
 } from "./types"
 
 export type ParseExprResult<ExprType extends Expr = Expr> = {
 	expr: ExprType
-	rest?: TokenStream
+	rest: TokenStream
 } | void
 
 export type ParseLiteralExprResult = ParseExprResult<LiteralExpr>
@@ -67,19 +69,114 @@ export const parseLiteralExpr = (
 	})
 }
 
-export type ParseAccesserExprResult = ParseExprResult<AccesserExpr>
-export const parseAccesserExpr = (
+export const parseIdentiferExpr = (
 	tokenStream$: TokenStream,
-): ParseAccesserExprResult => {
+): ParseExprResult<IdentifierExpr> => {
 	const tokenStream = skipSpaces(tokenStream$)
 	const first = tokenStream.shift()
 	if (!first) return
 
-	return Token.match<ParseAccesserExprResult>(first, {
+	return Token.match<ParseExprResult<IdentifierExpr>>(first, {
 		identifier() {
 			return {
-				expr: ["expr", "accesser", { ident: this }],
+				expr: ["expr", "identifier", this],
 				rest: tokenStream,
+			}
+		},
+		_() {},
+	})
+}
+
+export const parseAccesserExpr = (
+	tokenStream$: TokenStream,
+): ParseExprResult<AccesserExpr> => {
+	const tokenStream = skipSpaces(tokenStream$)
+	const first = parseIdentiferExpr(tokenStream)
+	if (!first) return
+
+	const afterFirst = skipSpaces(first.rest)
+	const exprEnded = {
+		expr: ["expr", "accesser", { accessed: first.expr }],
+		rest: Array.from(afterFirst),
+	} as ParseExprResult<AccesserExpr>
+
+	const next = afterFirst.shift()
+	if (!next) return exprEnded
+
+	return Token.match<ParseExprResult<AccesserExpr>>(next, {
+		accesser() {
+			const nextAccesser = parseAccesserExpr(afterFirst)
+			if (nextAccesser) {
+				return {
+					expr: [
+						"expr",
+						"accesser",
+						{
+							accessed: first.expr,
+							child: nextAccesser.expr[2].accessed,
+						},
+					],
+					rest: nextAccesser.rest,
+				}
+			} else return exprEnded
+		},
+		_: () => {
+			afterFirst.unshift(next)
+			const withBrackets = deliminated(
+				afterFirst,
+				BracketTokens["("],
+				BracketTokens[")"],
+			)
+			if (!withBrackets) return
+		},
+	})
+}
+
+export const parseBlockExpr = (
+	tokenStream$: TokenStream,
+): ParseExprResult<BlockExpr> => {
+	const tokenStream = skipSpaces(tokenStream$)
+	const withCurlyBrackets = deliminated(
+		tokenStream,
+		BracketTokens["{"],
+		BracketTokens["}"],
+	)
+	if (!withCurlyBrackets) return
+
+	const stmts = parseAllStmts(withCurlyBrackets[0])
+
+	return {
+		expr: ["expr", "block", { stmts }],
+		rest: withCurlyBrackets[1],
+	}
+}
+
+export const parseAssignExpr = (
+	tokenStream$: TokenStream,
+): ParseExprResult<AssignExpr> => {
+	const tokenStream = skipSpaces(tokenStream$)
+	const accesser = parseAccesserExpr(tokenStream)
+	if (!accesser) return
+
+	const afterAccesser = skipSpaces(accesser.rest)
+	const equalSign = afterAccesser.shift()
+	if (!equalSign) return
+
+	return Token.match<ParseExprResult<AssignExpr>>(equalSign, {
+		operator() {
+			if (this !== "=") return
+
+			const afterEqualSign = skipSpaces(afterAccesser)
+			const data = parseOneExpr(afterEqualSign)
+			if (!data) return
+
+			return {
+				expr: [
+					"expr",
+					"assign",
+					{ accesser: accesser.expr, data: data.expr },
+				],
+				rest: data.rest,
 			}
 		},
 		_() {},

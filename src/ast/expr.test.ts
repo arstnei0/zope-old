@@ -1,15 +1,25 @@
 import {
-	ParseAccesserExprResult,
 	ParseCallExprResult,
 	ParseExprResult,
 	ParseLiteralExprResult,
 	parseAccesserExpr,
+	parseAssignExpr,
+	parseBlockExpr,
 	parseCallExpr,
+	parseIdentiferExpr,
 	parseLiteralExpr,
 	parseOneExpr,
 } from "./expr"
-import { BracketTokens, Token, tokenize } from "../token"
-import { Expr, Literal } from "./types"
+import { Token, tokenize } from "../token"
+import {
+	AccesserExpr,
+	AssignExpr,
+	BlockExpr,
+	Expr,
+	IdentifierExpr,
+	Literal,
+} from "./types"
+import { parseAllStmt } from "./stmt"
 
 const foo = Token.identifier("foo")
 
@@ -35,11 +45,98 @@ it("parseLiteralExpr", () => {
 	} as ParseLiteralExprResult)
 })
 
-it("parseAccesserExpr", () => {
-	expect(parseAccesserExpr([foo])).toEqual({
-		expr: ["expr", "accesser", { ident: "foo" }],
+it("parseIdentifierExpr", () => {
+	expect(parseIdentiferExpr(tokenize("foo"))).toEqual({
+		expr: ["expr", "identifier", "foo"],
 		rest: [],
-	} as ParseAccesserExprResult)
+	} as ParseExprResult<IdentifierExpr>)
+})
+
+it("parseAccesserExpr", () => {
+	expect(parseAccesserExpr(tokenize("foo"))).toEqual({
+		expr: [
+			"expr",
+			"accesser",
+			{ accessed: parseIdentiferExpr(tokenize("foo"))?.expr },
+		],
+		rest: [],
+	} as ParseExprResult<AccesserExpr>)
+	expect(parseAccesserExpr(tokenize("foo.bar"))).toEqual({
+		expr: [
+			"expr",
+			"accesser",
+			{
+				accessed: parseIdentiferExpr(tokenize("foo"))?.expr,
+				child: parseIdentiferExpr(tokenize("bar"))?.expr,
+			},
+		],
+		rest: [],
+	} as ParseExprResult<AccesserExpr>)
+	expect(parseAccesserExpr(tokenize("foo.bar.baz"))).toEqual({
+		expr: [
+			"expr",
+			"accesser",
+			{
+				accessed: parseIdentiferExpr(tokenize("foo"))?.expr,
+				child: [
+					"expr",
+					"accesser",
+					{ accessed: parseIdentiferExpr(tokenize("bar"))?.expr },
+				],
+			},
+		],
+		rest: [],
+	} as ParseExprResult<AccesserExpr>)
+})
+
+it("parseBlockExpr", () => {
+	expect(
+		parseBlockExpr(
+			tokenize(`{
+		let a = 10
+		return a
+	}`),
+		),
+	).toEqual({
+		expr: [
+			"expr",
+			"block",
+			{
+				stmts: parseAllStmt(
+					tokenize(`
+		let a = 10
+		return a
+			`),
+				),
+			},
+		],
+		rest: [],
+	} as ParseExprResult<BlockExpr>)
+})
+
+it("parseAssignExpr", () => {
+	expect(parseAssignExpr(tokenize(`foo = true`))).toEqual({
+		expr: [
+			"expr",
+			"assign",
+			{
+				accesser: parseAccesserExpr(tokenize("foo"))?.expr,
+				data: parseOneExpr(tokenize(`true`))?.expr,
+			},
+		],
+		rest: [],
+	} as ParseExprResult<AssignExpr>)
+	expect(parseAssignExpr(tokenize(`foo.bar = true`))).toEqual({
+		expr: [
+			"expr",
+			"assign",
+			{
+				accesser: parseAccesserExpr(tokenize("foo.bar"))?.expr,
+				data: parseOneExpr(tokenize(`true`))?.expr,
+			},
+		],
+		rest: [],
+	} as ParseExprResult<AssignExpr>)
 })
 
 it("parseCallExpr", () => {
@@ -62,7 +159,11 @@ it("parse", () => {
 			"expr",
 			"call",
 			{
-				fn: ["expr", "accesser", { ident: "foo" }],
+				fn: [
+					"expr",
+					"accesser",
+					{ accessed: [parseIdentiferExpr(tokenize("foo"))?.expr] },
+				],
 				input: ["expr", "literal", Literal.string("Hello world")],
 			},
 		],
