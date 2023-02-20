@@ -59,7 +59,7 @@ export const NumberChars = [
 ] as const
 export type NumberChar = (typeof NumberChars)[number]
 
-export const Token = Enum<{
+export const TokenType = Enum<{
 	bracket: Bracket
 	punctuation: Punctuation
 	accesser: void
@@ -71,45 +71,59 @@ export const Token = Enum<{
 	operator: Operator
 	separator: Seperator
 }>()
-export type Token = typeof Token.item
+export type TokenType = typeof TokenType.item
+export type TokenPos = [number, number]
+export type Token = [TokenPos, TokenType]
 export type TokenStream = Token[]
 
 export const BracketTokens = {
-	"(": Token.bracket(Brackets["("]),
-	")": Token.bracket(Brackets[")"]),
-	"[": Token.bracket(Brackets["["]),
-	"]": Token.bracket(Brackets["]"]),
-	"{": Token.bracket(Brackets["{"]),
-	"}": Token.bracket(Brackets["}"]),
-	"<": Token.bracket(Brackets["<"]),
-	">": Token.bracket(Brackets[">"]),
+	"(": TokenType.bracket(Brackets["("]),
+	")": TokenType.bracket(Brackets[")"]),
+	"[": TokenType.bracket(Brackets["["]),
+	"]": TokenType.bracket(Brackets["]"]),
+	"{": TokenType.bracket(Brackets["{"]),
+	"}": TokenType.bracket(Brackets["}"]),
+	"<": TokenType.bracket(Brackets["<"]),
+	">": TokenType.bracket(Brackets[">"]),
 } as const
 
-export const AnySpaceChecker = (token: Token) => Token.type(token) === "space"
+export const AnySpaceChecker = (token: TokenType) =>
+	TokenType.type(token) === "space"
+
+export const ignoreTokenPos = (ts: TokenStream) => ts.map(($) => $[1])
 
 export const tokenize = (code: string): TokenStream => {
 	const stream: TokenStream = []
 	const codeArr = Array.from(`${code}\n`)
 
 	let currIdentifier: string | null = null
+	let currIdentifierStart: number | null = null
 
-	let separated: Token | null = Token.separated("") || null
+	let separated: TokenType | null = TokenType.separated("") || null
+	let separatedStart: number | null = null
 	let openedSeparator: Seperator | null = null
 
 	let currNumber: NumberChar[] | null = null
+	let currNumberStart: number | null = null
 
-	for (const i in codeArr) {
+	for (const iStr in codeArr) {
+		const i = +iStr
 		const char = codeArr[i]
 		const isSeparator = Seperators.includes(char as Seperator)
 
-		if (openedSeparator) {
+		if (openedSeparator && separatedStart !== null) {
 			if (openedSeparator === char) {
-				stream.push(separated)
-				separated = Token.separated("")
-				stream.push(Token.separator(char as Seperator))
+				stream.push([[separatedStart, i - 1], separated])
+				separated = TokenType.separated("")
+				stream.push([
+					[separatedStart, i],
+					TokenType.separator(char as Seperator),
+				])
 				openedSeparator = null
 			} else {
-				separated = Token.separated(`${Token.data(separated)}${char}`)
+				separated = TokenType.separated(
+					`${TokenType.data(separated)}${char}`,
+				)
 			}
 			continue
 		}
@@ -130,41 +144,64 @@ export const tokenize = (code: string): TokenStream => {
 			isVisitor
 		)
 
-		if (currNumber !== null) {
+		if (currNumber !== null && currNumberStart !== null) {
 			if (isNumber) {
 				currNumber.push(char as NumberChar)
 				continue
 			} else {
-				stream.push(Token.number(currNumber))
+				stream.push([
+					[currNumberStart, i],
+					TokenType.number(currNumber),
+				])
 				currNumber = null
+				currNumberStart = null
 			}
 		}
-		if (!isIdent && currIdentifier !== null) {
+		if (
+			!isIdent &&
+			currIdentifier !== null &&
+			currIdentifierStart !== null
+		) {
 			if (Keywords.includes(currIdentifier as Keyword)) {
-				stream.push(Token.keyword(currIdentifier as Keyword))
+				stream.push([
+					[currIdentifierStart, i],
+					TokenType.keyword(currIdentifier as Keyword),
+				])
 			} else {
-				stream.push(Token.identifier(currIdentifier))
+				stream.push([
+					[currIdentifierStart, i],
+					TokenType.identifier(currIdentifier),
+				])
 			}
 			currIdentifier = null
+			currIdentifierStart = null
 		}
 		if (isSpace) {
-			stream.push(Token.space(char as Space))
+			stream.push([[i, i], TokenType.space(char as Space)])
 		} else if (isSeparator) {
-			stream.push(Token.separator(char as Seperator))
-			separated = Token.separated("")
+			stream.push([[i, i], TokenType.separator(char as Seperator)])
+			separated = TokenType.separated("")
 			openedSeparator = char as Seperator
+			separatedStart = i
 		} else if (isNumber) {
 			currNumber = [char as NumberChar]
+			currNumberStart = i
 		} else if (isOperator) {
-			stream.push(Token.operator(char as Operator))
+			stream.push([[i, i], TokenType.operator(char as Operator)])
 		} else if (isPuncuation) {
-			stream.push(Token.punctuation(char as Punctuation))
+			stream.push([[i, i], TokenType.punctuation(char as Punctuation)])
 		} else if (isBracket) {
-			stream.push(Token.bracket(Brackets[char as keyof typeof Brackets]))
+			stream.push([
+				[i, i],
+				TokenType.bracket(Brackets[char as keyof typeof Brackets]),
+			])
 		} else if (isVisitor) {
-			stream.push(Token.accesser())
+			stream.push([[i, i], TokenType.accesser()])
 		} else {
-			if (currIdentifier === null) currIdentifier = ""
+			if (currIdentifier === null) {
+				currIdentifier = ""
+				currIdentifierStart = i
+			}
 			currIdentifier += char
 		}
 	}

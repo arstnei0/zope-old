@@ -1,39 +1,39 @@
-import { AnySpaceChecker, Brackets, Token } from "../token"
+import {
+	AnySpaceChecker,
+	Brackets,
+	TokenType,
+	ignoreTokenPos,
+	tokenize,
+} from "../token"
 import { deliminated, skipSpaces, splitStream } from "./helpers"
 
-const space = Token.space(" ")
-const ident1 = Token.identifier("h1")
-const ident2 = Token.identifier("after")
+const space = TokenType.space(" ")
+const ident1 = TokenType.identifier("h1")
+const ident2 = TokenType.identifier("after")
 
 it("skipSpaces", () => {
-	expect(skipSpaces([space, Token.identifier("foo"), space])).toEqual([
-		Token.identifier("foo"),
+	expect(skipSpaces([space, TokenType.identifier("foo"), space])).toEqual([
+		TokenType.identifier("foo"),
 	])
 
 	expect(
-		skipSpaces([space, Token.identifier("foo"), space], { end: false }),
-	).toEqual([Token.identifier("foo"), space])
+		skipSpaces([space, TokenType.identifier("foo"), space], { end: false }),
+	).toEqual([TokenType.identifier("foo"), space])
 
 	expect(
-		skipSpaces([space, Token.identifier("foo"), space], {
+		skipSpaces([space, TokenType.identifier("foo"), space], {
 			start: false,
 		}),
-	).toEqual([space, Token.identifier("foo")])
+	).toEqual([space, TokenType.identifier("foo")])
 })
 
 it("deliminated", () => {
 	expect(
 		deliminated(
-			[
-				space,
-				Token.bracket(Brackets["<"]),
-				ident1,
-				Token.bracket(Brackets[">"]),
-				ident2,
-			],
-			Token.bracket(Brackets["<"]),
-			Token.bracket(Brackets[">"]),
-		),
+			tokenize(`<h1>after`),
+			TokenType.bracket(Brackets["<"]),
+			TokenType.bracket(Brackets[">"]),
+		)?.map(($) => ignoreTokenPos($)),
 	).toEqual([[ident1], [ident2]])
 })
 

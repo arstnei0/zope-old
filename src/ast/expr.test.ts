@@ -6,22 +6,14 @@ import {
 	parseAssignExpr,
 	parseBlockExpr,
 	parseCallExpr,
-	parseIdentiferExpr,
 	parseLiteralExpr,
 	parseOneExpr,
 } from "./expr"
-import { Token, tokenize } from "../token"
-import {
-	AccesserExpr,
-	AssignExpr,
-	BlockExpr,
-	Expr,
-	IdentifierExpr,
-	Literal,
-} from "./types"
+import { TokenType, tokenize } from "../token"
+import { AccesserExpr, AssignExpr, BlockExpr, Expr, Literal } from "./types"
 import { parseAllStmt } from "./stmt"
 
-const foo = Token.identifier("foo")
+const foo = TokenType.identifier("foo")
 
 it("parseLiteralExpr", () => {
 	expect(parseLiteralExpr(tokenize("20"))).toEqual({
@@ -45,44 +37,13 @@ it("parseLiteralExpr", () => {
 	} as ParseLiteralExprResult)
 })
 
-it("parseIdentifierExpr", () => {
-	expect(parseIdentiferExpr(tokenize("foo"))).toEqual({
-		expr: ["expr", "identifier", "foo"],
-		rest: [],
-	} as ParseExprResult<IdentifierExpr>)
-})
-
 it("parseAccesserExpr", () => {
-	expect(parseAccesserExpr(tokenize("foo"))).toEqual({
-		expr: [
-			"expr",
-			"accesser",
-			{ accessed: parseIdentiferExpr(tokenize("foo"))?.expr },
-		],
-		rest: [],
-	} as ParseExprResult<AccesserExpr>)
-	expect(parseAccesserExpr(tokenize("foo.bar"))).toEqual({
-		expr: [
-			"expr",
-			"accesser",
-			{
-				accessed: parseIdentiferExpr(tokenize("foo"))?.expr,
-				child: parseIdentiferExpr(tokenize("bar"))?.expr,
-			},
-		],
-		rest: [],
-	} as ParseExprResult<AccesserExpr>)
 	expect(parseAccesserExpr(tokenize("foo.bar.baz"))).toEqual({
 		expr: [
 			"expr",
 			"accesser",
 			{
-				accessed: parseIdentiferExpr(tokenize("foo"))?.expr,
-				child: [
-					"expr",
-					"accesser",
-					{ accessed: parseIdentiferExpr(tokenize("bar"))?.expr },
-				],
+				idents: ["foo", "bar", "baz"],
 			},
 		],
 		rest: [],
@@ -159,11 +120,7 @@ it("parse", () => {
 			"expr",
 			"call",
 			{
-				fn: [
-					"expr",
-					"accesser",
-					{ accessed: [parseIdentiferExpr(tokenize("foo"))?.expr] },
-				],
+				fn: ["expr", "accesser", { idents: ["foo"] }],
 				input: ["expr", "literal", Literal.string("Hello world")],
 			},
 		],

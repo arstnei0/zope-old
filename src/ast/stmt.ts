@@ -1,4 +1,4 @@
-import { Token, TokenStream } from "../token"
+import { TokenType, TokenStream } from "../token"
 import { skipSpaces } from "./helpers"
 import { FunctionStmt, LetStmt, ReturnStmt, Stmt } from "./types"
 import { parseOneExpr } from "./expr"
@@ -15,7 +15,7 @@ export const parseReturnStmt = (
 	const first = tokenSream.shift()
 	if (!first) return
 
-	return Token.match<ParseStmtResult<ReturnStmt>>(first, {
+	return TokenType.match<ParseStmtResult<ReturnStmt>>(first, {
 		keyword() {
 			if (this !== "return") return
 
@@ -38,7 +38,7 @@ export const parseLetStmt = (
 	const first = tokenSream.shift()
 	if (!first) return
 
-	return Token.match<ParseStmtResult<LetStmt>>(first, {
+	return TokenType.match<ParseStmtResult<LetStmt>>(first, {
 		keyword() {
 			if (this !== "let") return
 
@@ -46,33 +46,36 @@ export const parseLetStmt = (
 			const identToken = afterLet.shift()
 			if (!identToken) return
 
-			return Token.match<ParseStmtResult<LetStmt>>(identToken, {
+			return TokenType.match<ParseStmtResult<LetStmt>>(identToken, {
 				identifier(ident) {
 					const afterIdent = skipSpaces(afterLet)
 					const equalSign = afterIdent.shift()
 					if (!equalSign) return
 
-					return Token.match<ParseStmtResult<LetStmt>>(equalSign, {
-						operator() {
-							if (this !== "=") return
+					return TokenType.match<ParseStmtResult<LetStmt>>(
+						equalSign,
+						{
+							operator() {
+								if (this !== "=") return
 
-							const afterEqualSign = skipSpaces(afterIdent)
-							if (!afterEqualSign) return
+								const afterEqualSign = skipSpaces(afterIdent)
+								if (!afterEqualSign) return
 
-							const data = parseOneExpr(afterEqualSign)
-							if (!data) return
+								const data = parseOneExpr(afterEqualSign)
+								if (!data) return
 
-							return {
-								stmt: [
-									"stmt",
-									"let",
-									{ ident: ident, data: data.expr },
-								],
-								rest: data.rest,
-							}
+								return {
+									stmt: [
+										"stmt",
+										"let",
+										{ ident: ident, data: data.expr },
+									],
+									rest: data.rest,
+								}
+							},
+							_() {},
 						},
-						_() {},
-					})
+					)
 				},
 				_() {},
 			})
@@ -88,7 +91,7 @@ export const parseFunctionStmt = (
 	const first = tokenSream.shift()
 	if (!first) return
 
-	return Token.match<ParseStmtResult<FunctionStmt>>(first, {
+	return TokenType.match<ParseStmtResult<FunctionStmt>>(first, {
 		keyword() {
 			if (this !== "function") return
 
@@ -96,7 +99,7 @@ export const parseFunctionStmt = (
 			const identToken = afterLet.shift()
 			if (!identToken) return
 
-			return Token.match<ParseStmtResult<FunctionStmt>>(identToken, {
+			return TokenType.match<ParseStmtResult<FunctionStmt>>(identToken, {
 				identifier(ident) {
 					const afterIdent = skipSpaces(afterLet)
 					if (!afterIdent) return

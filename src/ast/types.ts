@@ -9,11 +9,7 @@ export type Literal = typeof Literal.item
 export type ExprBase<t extends string, c> = ["expr", t, c]
 
 export type LiteralExpr = ExprBase<"literal", Literal>
-export type IdentifierExpr = ExprBase<"identifier", string>
-export type AccesserExpr = ExprBase<
-	"accesser",
-	{ accessed: Expr; child?: Expr }
->
+export type AccesserExpr = ExprBase<"accesser", { idents: string[] }>
 export type CallExpr = ExprBase<"call", { fn: Expr; input: Expr }>
 export type AssignExpr = ExprBase<
 	"assign",
@@ -27,7 +23,6 @@ export type Expr =
 	| CallExpr
 	| BlockExpr
 	| AssignExpr
-	| IdentifierExpr
 
 // Stmt
 export type StmtBase<t extends string, c> = ["stmt", t, c]

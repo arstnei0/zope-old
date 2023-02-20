@@ -1,4 +1,4 @@
-import { Token, TokenStream } from "../token"
+import { TokenType, TokenStream } from "../token"
 import { looseEqual } from "../utils/equal"
 
 export const skipSpaces = (
@@ -6,7 +6,7 @@ export const skipSpaces = (
 	{
 		start = true,
 		end = true,
-		checker = (token: Token) => Token.type(token) !== "space",
+		checker = (token: Token) => TokenType.type(token) !== "space",
 	} = {},
 ) => {
 	const left = tokenStream.findIndex(checker)
@@ -30,11 +30,11 @@ export const startsWithToken = (
 
 export const deliminated = (
 	tokenStream$: TokenStream,
-	start: Token,
-	end: Token,
+	start: TokenType,
+	end: TokenType,
 ): [result: TokenStream, rest: TokenStream] | void => {
 	const tokenStream = skipSpaces(tokenStream$)
-	if (looseEqual(tokenStream.shift(), start)) {
+	if (looseEqual(tokenStream.shift()?.[1], start)) {
 		let count = 0
 		const result = [] as TokenStream
 		const rest = [] as TokenStream
@@ -42,9 +42,9 @@ export const deliminated = (
 			if (count === -1) {
 				rest.push(token)
 			} else {
-				if (looseEqual(token, start)) {
+				if (looseEqual(token[1], start)) {
 					count += 1
-				} else if (looseEqual(token, end)) {
+				} else if (looseEqual(token[1], end)) {
 					if (count === 0) {
 						count = -1
 						continue
@@ -55,6 +55,7 @@ export const deliminated = (
 				result.push(token)
 			}
 		}
+		console.log(result)
 		return [result, rest]
 	}
 }
